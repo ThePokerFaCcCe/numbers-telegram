@@ -61,6 +61,7 @@ class NumberBot:
         def handle_start(pm): self.call_admin_handler(self.handle_add_number, pm)
 
     def call_admin_handler(self, handler: Callable, pm: Message):
+        """Calls handler only if user is in `admins` list"""
         if not pm.chat.id in self.admins:
             raise exceptions.AccessForbidden(pm)
         handler(pm)
@@ -92,7 +93,6 @@ class NumberBot:
 
     def handle_add_number(self, pm: Message):
         """Add number to database"""
-        raise ValueError('sss')
         msg = self.bot.reply_to(
             pm,
             InfoMessages.INPUT_NUMBER.format(example=NumberValidator.example)
