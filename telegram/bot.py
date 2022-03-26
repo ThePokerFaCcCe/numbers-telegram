@@ -1,10 +1,11 @@
 import traceback
 from typing import Callable
 from decouple import config
-from telebot import TeleBot, types, ExceptionHandler
+from telebot import TeleBot, types
 from telebot.types import Message
 
 from db.models import Admin, Number
+from excel import Excel
 from .messages import ErrorMessages, InfoMessages, ButtonTexts
 from .validators import NumberValidator
 from . import exceptions
@@ -58,7 +59,10 @@ class NumberBot:
         def handle_start(pm): self.call_admin_handler(self.handle_start, pm)
 
         @bot.message_handler(func=lambda pm: pm.text == ButtonTexts.ADD_NUMBER)
-        def handle_start(pm): self.call_admin_handler(self.handle_add_number, pm)
+        def handle_add_num(pm): self.call_admin_handler(self.handle_add_number, pm)
+
+        @bot.message_handler(func=lambda pm: pm.text == ButtonTexts.EXPORT)
+        def handle_export(pm): self.call_admin_handler(self.handle_export, pm)
 
     def call_admin_handler(self, handler: Callable, pm: Message):
         """Calls handler only if user is in `admins` list"""
@@ -90,6 +94,17 @@ class NumberBot:
         self.update_admins()
         self.bot.reply_to(pm, InfoMessages.ACCESS_SUCCESS,
                           reply_markup=self.markup)
+
+    def handle_export(self, pm: Message):
+        excel = Excel()
+        data = {num.number for num in Number.manager().all()}
+        excel.worksheet.write_column(0, 0, data)
+        excel.close()
+
+        self.bot.send_document(
+            pm.chat.id, open(excel.file_path, 'rb'), pm.message_id,
+            InfoMessages.EXPORT_CAPTION.format(count=len(data))
+        )
 
     def handle_add_number(self, pm: Message):
         """Add number to database"""

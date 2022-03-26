@@ -10,6 +10,7 @@ class InfoMessages:
     ACCESS_SUCCESS = 'دسترسی شما به ربات باز شد'
     ACCESS_ALREADY = 'شما از قبل دسترسی کامل به ربات دارید'
     ADD_NUMBER_SUCCESS = "شماره زیر با موفقیت افزوده شد\n{number}"
+    EXPORT_CAPTION = 'تعداد {count} شماره در فایل موجود میباشد.'
     INPUT_NUMBER = 'عدد خود را وارد کنید. مثال:\n{example}'
 
 
