@@ -8,7 +8,8 @@ class NumberValidator(Validator):
     regex = r'^[\d]{10}$'
 
     @classmethod
-    def post_validate(cls, value, bot, pm):
+    def post_validate(cls, pm):
+        value = pm.text
         if Number.manager().has(number=value):
-            raise ValueExists(bot, pm, value)
+            raise ValueExists(pm, value)
         return True

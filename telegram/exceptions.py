@@ -2,28 +2,27 @@ from .messages import ErrorMessages
 
 
 class TelegramBotException(Exception):
-    def __init__(self, bot, pm, message: str) -> None:
-        self.message = message
-        self.bot = bot
+    _default_message = None
+
+    def __init__(self, pm, message=None, **format_kwargs) -> None:
         self.pm = pm
+        message = message or self._default_message
+        self.message = message.format(**format_kwargs)
 
 
 class AccessForbidden(TelegramBotException):
-    def __init__(self, bot, pm):
-        super().__init__(bot, pm, ErrorMessages.FORBIDDEN)
+    _default_message = ErrorMessages.FORBIDDEN
 
 
 class InvalidInput(TelegramBotException):
-    def __init__(self, bot, pm, example=None):
-        super().__init__(
-            bot, pm,
-            ErrorMessages.INVALID.format(example=example)
-        )
+    _default_message = ErrorMessages.INVALID
+
+    def __init__(self, pm, example=None):
+        super().__init__(pm, example=example)
 
 
 class ValueExists(TelegramBotException):
-    def __init__(self, bot, pm, value=''):
-        super().__init__(
-            bot, pm,
-            ErrorMessages.EXISTS.format(value=value)
-        )
+    _default_message = ErrorMessages.EXISTS
+
+    def __init__(self, pm, value=None):
+        super().__init__(pm, value=value)

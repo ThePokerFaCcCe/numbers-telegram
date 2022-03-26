@@ -1,26 +1,36 @@
+import traceback
 from typing import Callable
 from decouple import config
 from telebot import TeleBot, types, ExceptionHandler
 from telebot.types import Message
 
 from db.models import Admin, Number
-from .messages import InfoMessages, ButtonTexts
+from .messages import ErrorMessages, InfoMessages, ButtonTexts
 from .validators import NumberValidator
 from . import exceptions
 
 ACCESS_PASSWORD = config("ACCESS_PASSWORD")
 
 
-class BotExceptionHandler(ExceptionHandler):
-    def handle(self, e):
-        if isinstance(e, exceptions.TelegramBotException):
-            e.bot.reply_to(e.pm, e.message)
-            return True
-
-
 class NumberBot:
     __admins: list
     __bot: TeleBot
+
+    def send_global_message(self, message):
+        for admin in self.admins:
+            try:
+                self.bot.send_message(admin, message)
+            except Exception as e:
+                pass
+
+    def handle(self, e):
+        if isinstance(e, exceptions.TelegramBotException):
+            self.bot.reply_to(e.pm, e.message)
+        else:
+            self.send_global_message(
+                ErrorMessages.UNKNOWN.format(traceback=traceback.format_exc())
+            )
+        return True
 
     @property
     def bot(self):
@@ -38,7 +48,7 @@ class NumberBot:
     def __init__(self) -> None:
         self.update_admins()
         bot = TeleBot(config("BOT_TOKEN"), threaded=False,
-                      exception_handler=BotExceptionHandler())
+                      exception_handler=self)
         self.__bot = bot
 
         @bot.message_handler(commands=['access'])
@@ -52,7 +62,7 @@ class NumberBot:
 
     def call_admin_handler(self, handler: Callable, pm: Message):
         if not pm.chat.id in self.admins:
-            raise exceptions.AccessForbidden(self.bot, pm)
+            raise exceptions.AccessForbidden(pm)
         handler(pm)
 
     def handle_start(self, pm: Message):
@@ -82,6 +92,7 @@ class NumberBot:
 
     def handle_add_number(self, pm: Message):
         """Add number to database"""
+        raise ValueError('sss')
         msg = self.bot.reply_to(
             pm,
             InfoMessages.INPUT_NUMBER.format(example=NumberValidator.example)
@@ -89,10 +100,9 @@ class NumberBot:
         self.bot.register_next_step_handler(msg, self.next_handler_add_number)
 
     def next_handler_add_number(self, pm: Message):
-        number_text = pm.text
-        NumberValidator.validate(number_text, self.bot, pm)
+        NumberValidator.validate(pm)
 
-        number = Number(number=number_text).save()
+        number = Number(number=pm.text).save()
         self.bot.reply_to(
             pm,
             InfoMessages.ADD_NUMBER_SUCCESS.format(number=number.number),

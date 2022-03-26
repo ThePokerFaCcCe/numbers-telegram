@@ -7,13 +7,13 @@ class Validator:
     regex = None
 
     @classmethod
-    def validate(cls, value, bot, pm):
-        """Raise `InvalidInput` if value wasn't valid"""
-        if not bool(re.match(cls.regex, value)):
-            raise InvalidInput(bot, pm, cls.example)
-        return cls.post_validate(value, bot, pm)
+    def validate(cls, pm):
+        """Raise `InvalidInput` if `pm.text` wasn't valid"""
+        if not bool(re.match(cls.regex, pm.text)):
+            raise InvalidInput(pm, cls.example)
+        return cls.post_validate(pm)
 
     @classmethod
-    def post_validate(cls, value, bot, pm):
+    def post_validate(cls, pm):
         """This method will be called after `validate()`"""
         return True
