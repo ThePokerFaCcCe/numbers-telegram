@@ -1,2 +1,3 @@
 pytelegrambotapi
 sqlite-orm
+python-decouple
