@@ -1,3 +1,4 @@
 pytelegrambotapi
 sqlite-orm
 python-decouple
+xlsxwriter
