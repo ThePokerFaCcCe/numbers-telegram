@@ -26,3 +26,10 @@ class ValueExists(TelegramBotException):
 
     def __init__(self, pm, value=None):
         super().__init__(pm, value=value)
+
+
+class ValueNotExists(TelegramBotException):
+    _default_message = ErrorMessages.NOT_EXISTS
+
+    def __init__(self, pm, value=None):
+        super().__init__(pm, value=value)

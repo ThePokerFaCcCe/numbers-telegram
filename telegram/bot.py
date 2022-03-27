@@ -7,7 +7,7 @@ from telebot.types import Message
 from db.models import Admin, Number
 from excel import Excel
 from .messages import ErrorMessages, InfoMessages, ButtonTexts
-from .validators import NumberValidator
+from .validators import AddNumberValidator, DeleteNumberValidator
 from . import exceptions
 
 ACCESS_PASSWORD = config("ACCESS_PASSWORD")
@@ -59,16 +59,23 @@ class NumberBot:
         def handle_start(pm): self.call_admin_handler(self.handle_start, pm)
 
         @bot.message_handler(func=lambda pm: pm.text == ButtonTexts.ADD_NUMBER)
-        def handle_add_num(pm): self.call_admin_handler(self.handle_add_number, pm)
+        def handle_add_num(pm): self.call_admin_handler(
+            self.handle_manage_number, pm, self.next_handler_add_number
+        )
+
+        @bot.message_handler(func=lambda pm: pm.text == ButtonTexts.DEL_NUMBER)
+        def handle_del_num(pm): self.call_admin_handler(
+            self.handle_manage_number, pm, self.next_handler_delete_number
+        )
 
         @bot.message_handler(func=lambda pm: pm.text == ButtonTexts.EXPORT)
         def handle_export(pm): self.call_admin_handler(self.handle_export, pm)
 
-    def call_admin_handler(self, handler: Callable, pm: Message):
+    def call_admin_handler(self, handler: Callable, pm: Message, *hargs, **hkwargs):
         """Calls handler only if user is in `admins` list"""
         if not pm.chat.id in self.admins:
             raise exceptions.AccessForbidden(pm)
-        handler(pm)
+        handler(pm, *hargs, **hkwargs)
 
     def handle_start(self, pm: Message):
         """Send welcome message"""
@@ -106,21 +113,34 @@ class NumberBot:
             InfoMessages.EXPORT_CAPTION.format(count=len(data))
         )
 
-    def handle_add_number(self, pm: Message):
-        """Add number to database"""
+    def handle_manage_number(self, pm: Message, handler: Callable):
+        """Add or Remove number to/from database"""
         msg = self.bot.reply_to(
             pm,
-            InfoMessages.INPUT_NUMBER.format(example=NumberValidator.example)
+            InfoMessages.INPUT_NUMBER.format(example=AddNumberValidator.example)
         )
-        self.bot.register_next_step_handler(msg, self.next_handler_add_number)
+        self.bot.register_next_step_handler(msg, handler)
 
     def next_handler_add_number(self, pm: Message):
-        validated_number = NumberValidator.validate(pm)
+        """Next step for add number to database"""
+        validated_number = AddNumberValidator.validate(pm)
 
         number = Number(number=validated_number).save()
         self.bot.reply_to(
             pm,
             InfoMessages.ADD_NUMBER_SUCCESS.format(number=number.number),
+            reply_markup=self.markup
+        )
+
+    def next_handler_delete_number(self, pm: Message):
+        """Next step for delete number from database"""
+        validated_number = DeleteNumberValidator.validate(pm)
+
+        number = Number.manager().get(number=validated_number)
+        number.delete()
+        self.bot.reply_to(
+            pm,
+            InfoMessages.DELETE_NUMBER_SUCCESS.format(number=number.number),
             reply_markup=self.markup
         )
 
@@ -133,4 +153,5 @@ class NumberBot:
         mk = types.ReplyKeyboardMarkup(True, True, row_width=1)
         mk.add(ButtonTexts.ADD_NUMBER)
         mk.add(ButtonTexts.EXPORT)
+        mk.add(ButtonTexts.DEL_NUMBER)
         return mk
