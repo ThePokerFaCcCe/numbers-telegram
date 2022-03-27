@@ -48,8 +48,10 @@ class NumberBot:
 
     def __init__(self) -> None:
         self.update_admins()
+        print("Connecting to bot...")
         bot = TeleBot(config("BOT_TOKEN"), threaded=False,
                       exception_handler=self)
+        print("bot connected successfully")
         self.__bot = bot
 
         @bot.message_handler(commands=['access'])
@@ -145,6 +147,7 @@ class NumberBot:
         )
 
     def run(self):
+        print("Bot started.")
         self.bot.infinity_polling()
 
     @property
