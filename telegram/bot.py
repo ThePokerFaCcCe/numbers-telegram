@@ -115,9 +115,9 @@ class NumberBot:
         self.bot.register_next_step_handler(msg, self.next_handler_add_number)
 
     def next_handler_add_number(self, pm: Message):
-        NumberValidator.validate(pm)
+        validated_number = NumberValidator.validate(pm)
 
-        number = Number(number=pm.text).save()
+        number = Number(number=validated_number).save()
         self.bot.reply_to(
             pm,
             InfoMessages.ADD_NUMBER_SUCCESS.format(number=number.number),
