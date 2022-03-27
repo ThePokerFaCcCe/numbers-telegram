@@ -9,7 +9,7 @@ class NumberValidator(Validator):
 
     @classmethod
     def post_validate(cls, pm):
-        value = pm.text
+        value = str(int(pm.text))
         if Number.manager().has(number=value):
             raise ValueExists(pm, value)
-        return True
+        return value
